@@ -18,6 +18,7 @@ This program pulls exclusevly motorcycle dealer data from OpenStreetMap using th
 * in a KML format for OrganicMaps (Special Icon/Pin treatment)
 * GPX for Garmin including Garmin Symbol
 * GPI for Garmin Points of Interest (POI including Icon)
+
 All data is queried globally.
 
 ## Details for usage ##
