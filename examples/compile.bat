@@ -14,6 +14,7 @@ pyinstaller --onefile --icon gravelmaps.ico create_moto_poi_4_webseite.py
 copy /Y C:\SynologyDrive\Python\create_moto_poi_4_webseite\dist\create_moto_poi_4_webseite.exe                  C:\SynologyDrive\Python\create_moto_poi_4_webseite\
 
 copy /Y C:\SynologyDrive\Python\create_moto_poi_4_webseite\create_moto_poi_4_webseite.py                        C:\SynologyDrive\Python\xx_PY_on_Github\create_moto_poi_4_webseite
+copy /Y C:\SynologyDrive\Python\create_moto_poi_4_webseite\gravelmaps.ico                                       C:\SynologyDrive\Python\xx_PY_on_Github\create_moto_poi_4_webseite\examples
 copy /Y C:\SynologyDrive\Python\create_moto_poi_4_webseite\h_utils.py                                           C:\SynologyDrive\Python\xx_PY_on_Github\create_moto_poi_4_webseite
 copy /Y C:\SynologyDrive\Python\create_moto_poi_4_webseite\compile.bat                                          C:\SynologyDrive\Python\xx_PY_on_Github\create_moto_poi_4_webseite\examples
 copy /Y C:\SynologyDrive\Python\create_moto_poi_4_webseite\BMP\*.bmp                                            C:\SynologyDrive\Python\xx_PY_on_Github\create_moto_poi_4_webseite\BMP
