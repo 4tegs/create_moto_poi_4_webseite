@@ -9,18 +9,20 @@
 # Version:
 #	2024 02 		Initial start of coding
 #	2024 11 		Now includes: GPX, GPI, KML, KML for Organic Maps
+#                   Now updated GPSBabel command string
 #
 # ##########################################################################################
 
 import sys
-import argparse
-import ast  # Module for safely evaluating strings containing Python expressions
+# import argparse
+# import ast  # Module for safely evaluating strings containing Python expressions
 import requests
 import shutil
 import simplekml
 import os
 import subprocess
-import xml.etree.ElementTree as ET
+# import xml.etree.ElementTree as ET
+from textwrap import dedent
 
 # ...................................................
 # Where do I find my utils to be imported? Set your path here!
@@ -29,8 +31,6 @@ try:
     import h_utils                              # type: ignore
 except Exception as e:
     print(f"Error importing utils: {e}")
-
-
 
 # ------------------------------------------------------------------------------------------
 #   ____      _       ___                                     
@@ -98,15 +98,31 @@ def rework_kml_for_organic(kml_path, icon_color):
     kml_final.close()
     os.remove(kml_tmp_file_name)        
 
+# ------------------------------------------------------------------------------------------
+#  __  __       _            _   _                           
+# |  \/  | __ _| | _____    | \ | | __ _ _ __ ___   ___  ___ 
+# | |\/| |/ _` | |/ / _ \   |  \| |/ _` | '_ ` _ \ / _ \/ __|
+# | |  | | (_| |   <  __/   | |\  | (_| | | | | | |  __/\__ \
+# |_|  |_|\__,_|_|\_\___|___|_| \_|\__,_|_| |_| |_|\___||___/
+#                      |_____|                               
+# ------------------------------------------------------------------------------------------
 def make_names(clear_name):
     # Some basic definitions
-    kml_name            = clear_name+"-global.kml"                            # type: ignore
-    kml_oroux           = clear_name+"-orux-global.kml"                          # type: ignore
-    kml_organic         = clear_name+"-organic-global.kml"                          # type: ignore
-    gpx_name            = clear_name+"-global.gpx"                            # type: ignore
-    gpi_name            = clear_name+"-global.gpi"                            # type: ignore                                         
+    kml_name            = clear_name+"-Dealer.kml"                            # type: ignore
+    kml_oroux           = clear_name+"-Dealer-orux.kml"                          # type: ignore
+    kml_organic         = clear_name+"-Dealer-organic.kml"                          # type: ignore
+    gpx_name            = clear_name+"-Dealer.gpx"                            # type: ignore
+    gpi_name            = clear_name+"-Dealer.gpi"                            # type: ignore                                         
     return(kml_name,kml_oroux, kml_organic,gpx_name,gpi_name)
 
+# ------------------------------------------------------------------------------------------
+#  __  __       _        __        __                      _       _       
+# |  \/  | __ _| | _____ \ \      / /_ _ _   _ _ __   ___ (_)_ __ | |_ ___ 
+# | |\/| |/ _` | |/ / _ \ \ \ /\ / / _` | | | | '_ \ / _ \| | '_ \| __/ __|
+# | |  | | (_| |   <  __/  \ V  V / (_| | |_| | |_) | (_) | | | | | |_\__ \
+# |_|  |_|\__,_|_|\_\___|___\_/\_/ \__,_|\__, | .__/ \___/|_|_| |_|\__|___/
+#                      |_____|           |___/|_|                          
+# ------------------------------------------------------------------------------------------
 def make_waypoints(data):
     coords = []
     for element in data['elements']:
@@ -133,27 +149,58 @@ def make_waypoints(data):
             coords.append(new_waypoint)
     return(coords)
 
-
+# ------------------------------------------------------------------------------------------
+#  __  __       _            ____ ______  __    ____ ____ ___ 
+# |  \/  | __ _| | _____    / ___|  _ \ \/ /   / ___|  _ \_ _|
+# | |\/| |/ _` | |/ / _ \  | |  _| |_) \  /   | |  _| |_) | | 
+# | |  | | (_| |   <  __/  | |_| |  __//  \   | |_| |  __/| | 
+# |_|  |_|\__,_|_|\_\___|___\____|_|  /_/\_\___\____|_|  |___|
+#                      |_____|            |_____|             
+# ------------------------------------------------------------------------------------------
 def make_gpx_gpi(brand_or_name, garmin_icon, organic_color):
+
+    overpass_query = "" 
+
     # Use an f-string to insert the variable into the query
-    if brand_or_name == "GENERIC":
-        overpass_query = f"""
-[out:json][timeout:2400];
-(
-nwr["shop"="motorcycle"]["brand"!~".*"];
-);
-out center;
-"""
-    else:
-        overpass_query = f"""
-[out:json][timeout:2400];
-(
-nwr["shop"="motorcycle"]["brand"~".*{brand_or_name}.*",i];
-nwr["shop"="motorcycle"]["name"~".*{brand_or_name}.*",i];
-);
-out center;
-"""
-                             
+    # Use dedent um einrücken zu können
+    if brand_or_name.lower() == "generic":
+        overpass_query = dedent(f"""                        
+            [out:json][timeout:2400];
+            (
+            nwr["shop"="motorcycle"]["brand"!~".*"];
+            );
+            out center;
+            """)
+
+    if brand_or_name.lower() == "cfmoto":
+        overpass_query = dedent(f"""
+            [out:json][timeout:2400];
+            (
+            nwr["shop"="motorcycle"]["brand"~"CF[ ]?Moto",i];
+            nwr["shop"="motorcycle"]["name"~"CF[ ]?Moto",i];
+            );
+            out center;
+            """)
+
+    if brand_or_name.lower() == "gasgas":
+        overpass_query = dedent(f"""
+            [out:json][timeout:2400];
+            (
+            nwr["shop"="motorcycle"]["brand"~"gas[ ]?gas",i];
+            nwr["shop"="motorcycle"]["name"~"gas[ ]?gas",i];
+            );
+            out center;
+            """)
+
+    if overpass_query == "":
+        overpass_query = dedent(f"""
+            [out:json][timeout:2400];
+            (
+            nwr["shop"="motorcycle"]["brand"~".*{brand_or_name}.*",i];
+            nwr["shop"="motorcycle"]["name"~".*{brand_or_name}.*",i];
+            );
+            out center;
+            """)
     print("Working on:      " + brand_or_name)
     # .......................................................................
     # Perform the Overpass query
@@ -174,6 +221,7 @@ out center;
     # Get the absolute path to the bitmap
     script_dir = os.path.dirname(os.path.abspath(__file__))  # Directory of run.py
     bitmap_path = os.path.join(script_dir, "BMP", brand_or_name+".bmp")
+    poi_repository_name_garmin = brand_or_name + "-Dealer"
 
     # Construct the GPSBabel command
     gpsbabel_command = [
@@ -181,12 +229,11 @@ out center;
         "-w",
         "-i", "gpx",
         "-f", gpx_name ,
-        "-o", f"garmin_gpi,bitmap={bitmap_path},unique=1",
+        "-o", f"garmin_gpi,bitmap={bitmap_path},category={poi_repository_name_garmin},descr=1,notes=1,position=1,unique=1",
         "-F", gpi_name
     ]
     # Run the command
     rc = subprocess.run(gpsbabel_command)
-
 
     # ----------------------------------------------------------------            
     # All KML here
@@ -200,7 +247,6 @@ out center;
     shutil.copy2(kml_name, kml_organic_name)                                # Making sure that the standard KML isn't touched while reworking for Organic Maps
 
     # next step: create a KML with icons to be used with oruxmaps
-
     kml = simplekml.Kml(name="<![CDATA["+brand_or_name+"]]>", visibility = "1" , open ="1", atomauthor = "Hans Straßgütl" , atomlink = "https://gravelmaps.de"  )  
     for element in coords:
         pt2 = kml.newpoint(name='<![CDATA[' + element["name"] + ']]>',coords=[(element["lon"], element["lat"])], description = element["description"] )
@@ -209,17 +255,25 @@ out center;
 
     rework_kml_for_organic(kml_organic_name, organic_color)                
 
-    copy_path = ".\\POI_ww\\"
-    if not os.path.exists(copy_path): os.mkdir(copy_path)                                                        
-    shutil.copy2(gpx_name , copy_path+gpx_name)                             
+    copy_path_gpx = ".\\POI_ww_GPX\\"
+    copy_path_gpi = ".\\POI_ww_GPI\\"
+    copy_path_kml_organic = ".\\POI_ww_KML_OrganicMaps\\"
+    copy_path_kml_orux = ".\\POI_ww_KML_OruxMaps\\"
+    if not os.path.exists(copy_path_gpx): os.mkdir(copy_path_gpx)                                                        
+    shutil.copy2(gpx_name , copy_path_gpx+gpx_name)             
     os.remove(gpx_name)                                                     
-    shutil.copy2(gpi_name , copy_path+gpi_name)                             
-    os.remove(gpi_name)                                                     
-    # shutil.copy2(kml_name , copy_path+kml_name)                             
+
+    if not os.path.exists(copy_path_gpi): os.mkdir(copy_path_gpi)                                                        
+    shutil.copy2(gpi_name , copy_path_gpi+gpi_name)                             
+    os.remove(gpi_name)    
+
+    if not os.path.exists(copy_path_kml_orux): os.mkdir(copy_path_kml_orux)                                                        
+    shutil.copy2(kml_orux_name , copy_path_kml_orux+kml_orux_name)                
     os.remove(kml_name)                                                     
-    shutil.copy2(kml_orux_name , copy_path+kml_orux_name)                
     os.remove(kml_orux_name)                                               
-    shutil.copy2(kml_organic_name , copy_path+kml_organic_name)             
+
+    if not os.path.exists(copy_path_kml_organic): os.mkdir(copy_path_kml_organic)                                                        
+    shutil.copy2(kml_organic_name , copy_path_kml_organic+kml_organic_name)             
     os.remove(kml_organic_name)                                             
     
 
@@ -246,32 +300,21 @@ if __name__ == "__main__":
     file_paths = sys.argv[1:]                   # the first argument (0) is the script itself. 1: heisst, wir haben nun in der file_paths alle anderen Argumente
     # ....................................................
     if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-        print("\n\tPull data from Overpass Turbo and convert it.\n\t\tVersion v1 dated 11/2024\n\t\tWritten by Hans Strassguetl - https://gravelmaps.de \n\t\tLicenced under https://creativecommons.org/licenses/by-sa/4.0/ \n\t\tIcons used are licensed under: Map Icons Collection - Creative Commons 3.0 BY-SA\n\t\tAuthor: Nicolas Mollet - https://mapicons.mapsmarker.com\n\t\tor https://creativecommons.org/publicdomain/zero/1.0/deed.en\n\n")
+        print("\n\tPull data from Overpass Turbo and convert it.\n\t\tVersion v1.1 dated 12/2024\n\t\tWritten by Hans Strassguetl - https://gravelmaps.de \n\t\tLicenced under https://creativecommons.org/licenses/by-sa/4.0/ \n\t\tIcons used are licensed under: Map Icons Collection - Creative Commons 3.0 BY-SA\n\t\tAuthor: Nicolas Mollet - https://mapicons.mapsmarker.com\n\t\tor https://creativecommons.org/publicdomain/zero/1.0/deed.en\n\n")
     # .......................................................................
     # Some basic definitions
     # .......................................................................
-    GPSBabel = "C:\\Program Files\\GPSBabel\\GPSBabel.exe"
+    GPSBabel = "C:\\Program Files\\GPSBabel\\gpsbabel.exe"
     # .......................................................................
     # Build of overpass query for GasGas
     # .......................................................................
     # Define the variable
-    brand_or_name = "GENERIC"
-    make_gpx_gpi(brand_or_name,"ATV","placemark-orange")
-    brand_or_name = "BMW"
-    make_gpx_gpi(brand_or_name,"ATV","placemark-orange")
-    brand_or_name = "GasGas"
-    make_gpx_gpi(brand_or_name,"ATV","placemark-orange")
-    brand_or_name = "Husqvarna"
-    make_gpx_gpi(brand_or_name,"ATV","placemark-orange")
-    brand_or_name = "CFMOTO"
-    make_gpx_gpi(brand_or_name,"ATV","placemark-orange")
-    brand_or_name = "CF MOTO"
-    make_gpx_gpi(brand_or_name,"ATV","placemark-orange")
-    brand_or_name = "Honda"
-    make_gpx_gpi(brand_or_name,"ATV","placemark-orange")
-    brand_or_name = "Yamaha"
-    make_gpx_gpi(brand_or_name,"ATV","placemark-orange")
-    brand_or_name = "Suzuki"
-    make_gpx_gpi(brand_or_name,"ATV","placemark-orange")
-
-    
+    make_gpx_gpi("BMW","ATV","placemark-orange")
+    make_gpx_gpi("CFMOTO","ATV","placemark-orange")
+    make_gpx_gpi("GasGas","ATV","placemark-orange")
+    make_gpx_gpi("Honda","ATV","placemark-orange")
+    make_gpx_gpi("Husqvarna","ATV","placemark-orange")
+    make_gpx_gpi("KTM","ATV","placemark-orange")
+    make_gpx_gpi("Suzuki","ATV","placemark-orange")
+    make_gpx_gpi("Yamaha","ATV","placemark-orange")
+    make_gpx_gpi("GENERIC","ATV","placemark-orange")
